@@ -20,7 +20,7 @@ SCATR-ITS is a scalable transformer model for efficient individual tree segmenta
 
 ## News
 
-* **X.11.2026:** The SCATR-ITS codebase will be migrated from [MMDetection3D](https://github.com/open-mmlab/mmdetection3d) to the [Pointcept](https://github.com/pointcept/pointcept) library to enable compatibility with more recent versions of PyTorch and CUDA, since MMDetection3D is no longer actively maintained. The Pointcept implementation will be merged into the main branch in the coming months, after which the MMDetection3D-based version will be deprecated. Star the repository to stay updated with the latest releases of SCATR-ITS.
+* **23.11.2026:** The SCATR-ITS codebase will be migrated from [MMDetection3D](https://github.com/open-mmlab/mmdetection3d) to [Pointcept](https://github.com/pointcept/pointcept) to enable compatibility with more recent versions of PyTorch and CUDA, since MMDetection3D is no longer actively maintained. The Pointcept implementation will be merged into the main branch in the coming months, after which the MMDetection3D-based version will be deprecated. Star the repository to stay updated with the latest releases of SCATR-ITS.
 
 ## 1. Installation
 
