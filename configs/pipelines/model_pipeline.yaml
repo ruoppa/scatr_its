@@ -1,0 +1,55 @@
+train_pipeline:
+  LoadPointsFromFile:
+    load_dim: ${dataset.general.data_dim}
+    use_dim: ${dataset.general.use_dim}
+  CylinderCrop:
+    radius: ${model.radius}
+      
+  GridSample:
+    grid_size: ${model.voxel_size}
+  
+  PointSample_:
+    num_points: ${model.num_points}
+  
+  PointInstClassMapping_:
+    num_classes: ${add:${dataset.general.num_semantic_classes},1}
+
+val_pipeline: ${model_training.train_pipeline}
+
+test_pipeline:
+  LoadPointsFromFile: 
+    load_dim: ${dataset.general.data_dim}
+    use_dim: ${dataset.general.use_dim}
+
+train_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+val_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+test_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+val_evaluator:
+  type: ForestMetric
+  data_path: ${dataset.output.output_data_dir}
+  metadata_path: ${dataset.accuracy.metadata_file}
+  iou_thresh: ${dataset.accuracy.iou_thresh}
+  metric_list: ${dataset.accuracy.metric_list}
+  instance_pred_field: ${dataset.output.instance_pred_field}
+  confidence_field: ${dataset.output.score_pred_field}
+  instance_gt_field: ${dataset.preprocess.instance_field}
+  semantic_pred_field: ${dataset.output.semantic_pred_field}
+  semantic_gt_field: ${dataset.preprocess.semantic_field}
+  semantic_class_names: ${dataset.general.semantic_class_names}
+  file_type: ${dataset.output.file_extension}
+  ignore_classes: ${dataset.preprocess.ignore_semantic_classes}
+  filter_small_instances: ${dataset.accuracy.filter_small_instances}
+  min_instance_points: ${dataset.accuracy.min_instance_points}
+  min_instance_h: ${dataset.accuracy.min_instance_h}

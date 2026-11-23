@@ -1,0 +1,41 @@
+{
+  "name": "scatr_its",
+  "image": "scatr_its",
+  "mounts": [
+    // Mount datasets TODO: configure local directories
+    "source=${localEnv:HOME}/data/FGI-EMIT,target=/workspaces/scatr_its/data/raw_data/FGI-EMIT,type=bind",
+    "source=${localEnv:HOME}/data/FIV2_las,target=/workspaces/scatr_its/data/raw_data/FIV2_las,type=bind",
+    "source=${localEnv:HOME}/data/ALS_XL_20_pts,target=/workspaces/scatr_its/data/raw_data/ALS_XL_20_pts,type=bind",
+    "source=${localEnv:HOME}/data/LAUTx,target=/workspaces/scatr_its/data/raw_data/LAUTx,type=bind",
+    "source=${localEnv:HOME}/data/wytham_woods,target=/workspaces/scatr_its/data/raw_data/wytham_woods,type=bind",
+    // Mount checkpoints TODO: configure local directories
+    "source=${localEnv:HOME}/data/scatr_its_checkpoints,target=/workspaces/scatr_its/data/checkpoints,type=bind",
+    // Mount local time so that timestamps within the container match system time
+    "source=/etc/localtime,target=/etc/localtime,type=bind,readonly",
+    "source=/etc/timezone,target=/etc/timezone,type=bind,readonly"
+  ],
+  "runArgs": [
+    "--runtime=nvidia",
+    "--shm-size=128g"
+  ],
+  "containerEnv": {
+	  "NVIDIA_VISIBLE_DEVICES": "1,2" // TODO: configure which GPUs to use
+	},
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      // Automatically install useful extensions
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "ms-python.vscode-python-envs",
+        "njpwerner.autodocstring"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}

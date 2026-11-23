@@ -1,0 +1,163 @@
+dataset:
+  dataset_name: <REQUIRED>
+  type: ForestDataset
+  data_root: /workspaces/scatr_its/data
+
+  preprocess:
+    raw_data_dir: raw_data
+    preprocessed_data_dir: preprocessed_data
+    input_data_dir: input_data
+    training_dir: <REQUIRED>
+    validation_dir: <REQUIRED>
+    test_dir: <REQUIRED>
+    feat_to_load: ~
+    max_n_points: ~
+    file_extension: <REQUIRED>
+    instance_field: tree_index
+    semantic_field: classification
+    ignore_semantic_classes: ~
+    non_instance_id: 0
+    semantic_class_mapping: ~
+
+  general:
+    num_semantic_classes: 2
+    semantic_class_names: {
+      0: other,
+      1: tree
+    }
+    instance_class_names: {
+      1: tree,
+    }
+    data_dim: 3
+    use_dim: [0, 1, 2]
+  
+  output:
+    output_data_dir: predictions
+    superpoint_data_dir: superpoints
+    file_extension: <REQUIRED>
+    instance_pred_field: tree_pred
+    semantic_pred_field: semantic_pred
+    score_pred_field: score
+
+  accuracy:
+    metadata_file: ~
+    iou_thresh: 0.5
+    metric_list: [precision, recall, f1, cov, ap, iou, br, bp, rr]
+    ignore_classes: ${dataset.preprocess.ignore_semantic_classes}
+    filter_small_instances: True
+    min_instance_points: 5
+    min_instance_h: 1.5
+
+  data_split:
+    training: []
+    validation: []
+    test: []
+
+model:
+  type: SCATR_ITS
+  in_channels: ${channel_count:${dataset.general.use_dim}}
+  num_channels: 32
+  voxel_size: 0.2
+  num_semantic_classes: ${dataset.general.num_semantic_classes}
+  prepare_epochs: 1000
+  radius: 24
+  step_size_ratio: 0.25
+  num_points: 640000
+  score_th: 0.3
+  overlap_th: 0.3
+  cylinder_stride_mode: max_stride
+  max_object_size: 6
+
+  backbone:
+    type: SpConvUNet
+    # Custom OmegaConf resolver creates channel counts dynamically (see util/config.py)
+    num_planes: ${channel_list:${model.num_channels},5}
+
+  decoder:
+    type: QueryDecoder
+    in_channels: ${model.num_channels}
+    num_semantic_queries: ${dataset.general.num_semantic_classes}
+
+  dynamic_query_module:
+    type: DynamicQueryModule
+    in_channels: ${model.num_channels}
+    bins: {
+      0: 150,
+      15: 300,
+      25: 900,
+      45: 1350,
+      75: 1800,
+    }
+    ordinal: True
+  
+  criterion:
+    type: ForestUnifiedCriterion
+    num_semantic_classes: ${dataset.general.num_semantic_classes}
+
+  test_cfg:
+    topk_insts: 1800
+    npoint_thr: 5
+    z_diff_thr: 20
+    file_extension: ${dataset.output.file_extension}
+    instance_pred_field: ${dataset.output.instance_pred_field}
+    semantic_pred_field: ${dataset.output.semantic_pred_field}
+    instance_gt_field: ${dataset.preprocess.instance_field}
+    semantic_gt_field: ${dataset.preprocess.semantic_field}
+    score_pred_field: ${dataset.output.score_pred_field}
+    input_file_extension: ${dataset.preprocess.file_extension}
+
+superpoint_model:
+  type: SuperpointGenerator
+  in_channels: ${channel_count:${dataset.general.use_dim}}
+  num_channels: 32
+  voxel_size: 0.2
+  num_semantic_classes: ${dataset.general.num_semantic_classes}
+  radius: 32
+  step_size_ratio: 0.25
+  num_points: 10000000
+  sp_merge_mode: order
+  reg_lambda_fg: 0.003
+  reg_lambda_bg: 0.3
+  min_size: 1
+  graph_k: 8
+  separate_bg_fg: True
+  spatial_weight: ~
+  edge_weight_mode: unit
+  cylinder_stride_mode: max_stride
+  max_object_size: 4
+  max_iterations: ~
+
+  backbone:
+    type: SpConvUNet
+    # Custom OmegaConf resolver creates channel counts dynamically (see util/config.py)
+    num_planes: ${channel_list:${superpoint_model.num_channels},5}
+
+model_training:
+  train_dataloader:
+    batch_size: 2
+  default_hooks:
+    checkpoint:
+      type: CheckpointHook_
+      keep_every_n_epochs: 250
+  train_cfg:
+    type: EpochBasedTrainLoop
+    max_epochs: 3500
+    val_interval: 20
+  val_cfg:
+    type: ValLoop
+    val_interval: ${model_training.train_cfg.val_interval}
+
+superpoint_model_training:
+  train_dataloader:
+    batch_size: 2
+  default_hooks:
+    checkpoint:
+      type: CheckpointHook_
+      keep_every_n_epochs: 100
+  train_cfg:
+    type: EpochBasedTrainLoop
+    max_epochs: 700
+    val_interval: 10
+  val_cfg:
+    type: ValLoop
+    val_interval: ${superpoint_model_training.train_cfg.val_interval}

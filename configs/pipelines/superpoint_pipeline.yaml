@@ -1,0 +1,52 @@
+train_pipeline:
+  LoadPointsFromFile:
+    load_dim: ${dataset.general.data_dim}
+    use_dim: ${dataset.general.use_dim}
+  CylinderCrop:
+    radius: ${superpoint_model.radius}
+      
+  GridSample:
+    grid_size: ${superpoint_model.voxel_size}
+  
+  PointSample_:
+    num_points: ${superpoint_model.num_points}
+  
+  PointInstClassMapping_:
+    num_classes: ${add:${dataset.general.num_semantic_classes},1}
+
+val_pipeline: ${superpoint_model_training.train_pipeline}
+
+test_pipeline:
+  LoadPointsFromFile: 
+    load_dim: ${dataset.general.data_dim}
+    use_dim: ${dataset.general.use_dim}
+
+train_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+val_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+test_dataloader:
+  dataset:
+    type: ${dataset.type}
+    data_root: ${dataset.preprocess.input_data_dir}
+
+val_evaluator:
+  type: SuperpointMetric
+  data_path: ${dataset.preprocess.test_dir}
+  superpoint_path: ${dataset.output.superpoint_data_dir}
+  metadata_path: ${dataset.accuracy.metadata_file}
+  iou_thresh: ${dataset.accuracy.iou_thresh}
+  metric_list: ${dataset.accuracy.metric_list}
+  instance_gt_field: ${dataset.preprocess.instance_field}
+  semantic_gt_field: ${dataset.preprocess.semantic_field}
+  semantic_class_names: ${dataset.general.semantic_class_names}
+  file_type: ${dataset.preprocess.file_extension}
+  ignore_classes: ${dataset.preprocess.ignore_semantic_classes}
+  semantic_class_mapping: ${dataset.preprocess.semantic_class_mapping}
+  graph_k: ${superpoint_model.graph_k}
